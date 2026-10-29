@@ -86,6 +86,124 @@ export async function getCategoryBySlug(slug: string) {
   return memoryCategories.find((c) => c.slug === slug && c.isActive) || null;
 }
 
+export async function createCategory(catData: any) {
+  const db = await connectToDatabase();
+  if (db) {
+    try {
+      const newCat = await Category.create(catData);
+      return JSON.parse(JSON.stringify(newCat));
+    } catch (err) {
+      console.error('MongoDB createCategory failed:', err);
+      throw err;
+    }
+  }
+
+  const newCat = {
+    ...catData,
+    _id: `mem_cat_${Date.now()}`,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  memoryCategories.push(newCat);
+  return newCat;
+}
+
+export async function updateCategory(id: string, updateData: any) {
+  const db = await connectToDatabase();
+  if (db) {
+    try {
+      const updated = await Category.findByIdAndUpdate(id, updateData, { new: true }).lean();
+      if (updated) return JSON.parse(JSON.stringify(updated));
+    } catch (err) {
+      console.error('MongoDB updateCategory failed:', err);
+      throw err;
+    }
+  }
+
+  const idx = memoryCategories.findIndex((c) => c._id === id || c.slug === id);
+  if (idx !== -1) {
+    memoryCategories[idx] = { ...memoryCategories[idx], ...updateData, updatedAt: new Date() };
+    return memoryCategories[idx];
+  }
+  return null;
+}
+
+export async function deleteCategory(id: string) {
+  const db = await connectToDatabase();
+  if (db) {
+    try {
+      await Category.findByIdAndDelete(id);
+      return true;
+    } catch (err) {
+      console.error('MongoDB deleteCategory failed:', err);
+      throw err;
+    }
+  }
+
+  const initialLen = memoryCategories.length;
+  memoryCategories = memoryCategories.filter((c) => c._id !== id && c.slug !== id);
+  return memoryCategories.length < initialLen;
+}
+
+export async function forceSeedDatabase() {
+  const db = await connectToDatabase();
+  if (!db) {
+    throw new Error('Database is not connected. Please verify your MongoDB connection string first.');
+  }
+
+  let catCount = 0;
+  for (const cat of INITIAL_CATEGORIES) {
+    await Category.findOneAndUpdate({ slug: cat.slug }, cat, { upsert: true, new: true });
+    catCount++;
+  }
+
+  let prodCount = 0;
+  for (const prod of INITIAL_PRODUCTS) {
+    await Product.findOneAndUpdate({ slug: prod.slug }, prod, { upsert: true, new: true });
+    prodCount++;
+  }
+
+  return { success: true, seededCategories: catCount, seededProducts: prodCount };
+}
+
+export async function getDatabaseSummary() {
+  const db = await connectToDatabase();
+  if (db) {
+    try {
+      const [productsCount, categoriesCount, ordersCount] = await Promise.all([
+        Product.countDocuments(),
+        Category.countDocuments(),
+        Order.countDocuments(),
+      ]);
+
+      return {
+        isConnected: true,
+        source: 'MongoDB Database',
+        productsCount,
+        categoriesCount,
+        ordersCount,
+      };
+    } catch (e: any) {
+      return {
+        isConnected: false,
+        source: 'Memory Fallback Store',
+        productsCount: memoryProducts.length,
+        categoriesCount: memoryCategories.length,
+        ordersCount: memoryOrders.length,
+        error: e.message,
+      };
+    }
+  }
+
+  return {
+    isConnected: false,
+    source: 'Memory Fallback Store (Offline)',
+    productsCount: memoryProducts.length,
+    categoriesCount: memoryCategories.length,
+    ordersCount: memoryOrders.length,
+  };
+}
+
 // ==========================================
 // PRODUCTS
 // ==========================================

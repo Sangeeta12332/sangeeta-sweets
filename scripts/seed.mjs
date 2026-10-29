@@ -6,20 +6,23 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Helper to read .env.local manually if dotenv is not installed
+// Helper to read .env.local and .env
 function loadEnv() {
-  const envPath = path.resolve(__dirname, '../.env.local');
-  if (fs.existsSync(envPath)) {
-    const content = fs.readFileSync(envPath, 'utf8');
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eqIdx = trimmed.indexOf('=');
-      if (eqIdx !== -1) {
-        const key = trimmed.slice(0, eqIdx).trim();
-        const val = trimmed.slice(eqIdx + 1).trim();
-        if (!process.env[key]) {
-          process.env[key] = val;
+  const envFiles = ['.env.local', '.env'];
+  for (const file of envFiles) {
+    const envPath = path.resolve(__dirname, `../${file}`);
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim();
+          if (!process.env[key]) {
+            process.env[key] = val;
+          }
         }
       }
     }
@@ -31,8 +34,14 @@ loadEnv();
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  console.error('❌ MONGODB_URI is not set in environment or .env.local!');
-  console.error('Please configure MONGODB_URI in .env.local and run again.');
+  console.error('❌ MONGODB_URI is not set in environment, .env.local, or .env!');
+  console.error('Please configure MONGODB_URI in .env.local or .env and run again.');
+  process.exit(1);
+}
+
+if (MONGODB_URI.includes('<username>') || MONGODB_URI.includes('<password>')) {
+  console.error('❌ MONGODB_URI contains placeholder <username> or <password>.');
+  console.error('Please configure your real credentials in .env.local before seeding.');
   process.exit(1);
 }
 

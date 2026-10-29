@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 const COOKIE_NAME = 'sm_admin_session';
 
 function getSecretKey(): string {
-  return process.env.JWT_SECRET || 'sangita_mithai_dev_secret_key_default_2026';
+  return process.env.JWT_SECRET || 'sm_internal_secure_fallback_session_key';
 }
 
 export interface AdminSession {
@@ -50,14 +50,19 @@ export function verifySessionToken(token: string): AdminSession | null {
 }
 
 /**
- * Verify admin credentials against environment variables or database
+ * Verify admin credentials strictly against environment variables
  */
 export async function authenticateAdmin(email: string, pass: string): Promise<boolean> {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@sangitamithai.com';
-  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+  const configuredEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const configuredPassword = process.env.ADMIN_PASSWORD || '';
 
-  if (!email || !pass) return false;
-  return email.trim().toLowerCase() === adminEmail.trim().toLowerCase() && pass === adminPass;
+  if (!email || !pass || !configuredEmail || !configuredPassword) {
+    return false;
+  }
+
+  const normalizedInputEmail = email.trim().toLowerCase();
+
+  return normalizedInputEmail === configuredEmail && pass === configuredPassword;
 }
 
 /**

@@ -815,6 +815,7 @@ The following parameters require physical details or business confirmation from 
 | **Physical Shop Address & Phone** | Footer and Contact Us page display. | Generic placeholders displayed (*"Shop Address Placeholder, City, PIN"*). | **TBD by owner** |
 | **Shop Opening Hours & Same-Day Cutoff** | Header top strip, Contact page, order window. | Standard placeholder (*9:00 AM – 9:30 PM Daily*) used. | **TBD by owner** |
 | **Local Delivery Zone (PIN Codes)** | PIN validation on checkout. | Environment variable `SHOP_ALLOWED_PINCODES` configured with sample PIN codes. | **TBD by owner** |
-| **Delivery Charges & Free Threshold** | Financial calculation on Cart and Checkout. | Default placeholder: ₹40 standard delivery fee, Free for orders above ₹500. | **TBD by owner** |
+| **Delivery Charges & Free Threshold** | Financial calculation on Cart and Checkout. | Default placeholder: ₹40 standard delivery fee, Fre
+e for orders above ₹500. | **TBD by owner** |
 | **Real Shop Sweet Photographs** | Product cards and detail pages. | Replaceable high-resolution sample photography used initially. | **TBD by owner** |
 | **Online Payment Gateway Selection** | Checkout payment options (Phase 5). | COD enabled by default at launch; online payment gateway options (Razorpay/PhonePe) marked Coming Soon. | **TBD by owner** |
